@@ -10,16 +10,6 @@ from shutil import get_terminal_size
 from sys import stdout
 
 
-class WallGraphics(StrEnum):
-    Horirzontal = "─"
-    Vertical = "│"
-    LTCor = "╭"
-    LBCor = "╰"
-    RTCor = "╮"
-    RBCor = "╯"
-    Cross = "┼"
-
-
 class Color(StrEnum):
     Black = "30m"
     Red = "31m"
@@ -51,6 +41,10 @@ class Visualizer:
         @staticmethod
         def up(n=1):
             stdout.write(f"\x1b[{n}A")
+
+        @staticmethod
+        def up_and_begining(n=1):
+            stdout.write(f"\x1b[{n}F")
 
         @staticmethod
         def down(n=1):
@@ -146,7 +140,7 @@ class Visualizer:
                 )
             start = Point(*(int(x) for x in fp.readline().strip().split(",")))
             end = Point(*(int(x) for x in fp.readline().strip().split(",")))
-            path = [c for c in fp.readline().strip()]
+            path = [c.upper() for c in fp.readline().strip()]
         self.maze = maze
         self.start = start
         self.end = end
@@ -162,17 +156,112 @@ class Visualizer:
 
     def render(self):
         term = Visualizer.Terminal()
-        term.update()
+        cursor = Visualizer.Cursor()
+        term.enter_alternate()
+        term.clear()
+        cursor.home()
 
-        if self.width > term.width or self.height > term.height:
-            raise Exception("Maze too big")
+        N = 0b0001
+        E = 0b0010
+        S = 0b0100
+        W = 0b1000
+        m_h = len(self.maze)
+        m_w = len(self.maze[0])
+        out = [[" " for _ in range(m_w * 2 + 1)] for _ in range(m_h * 2 + 1)]
+
+        # handling walls
+        for mi in range(m_h):
+            for mj in range(m_w):
+                i = mi * 2 + 1
+                j = mj * 2 + 1
+                cell = self.maze[mi][mj].walls
+                if cell & N:
+                    out[i - 1][j] = "─"
+                if cell & S:
+                    out[i + 1][j] = "─"
+                if cell & E:
+                    out[i][j + 1] = "│"
+                if cell & W:
+                    out[i][j - 1] = "│"
+
+        # handling corners
+        def set_junction(arr: list[list[str]], i: int, j: int) -> None:
+            mask = 0
+            checks = [
+                (-1, 0, "│"),  # up
+                (0, 1, "─"),  # right
+                (1, 0, "│"),  # down
+                (0, -1, "─"),  # left
+            ]
+            junction_map = {
+                1: "╵",
+                2: "╶",
+                3: "╰",
+                4: "╷",
+                5: "│",
+                6: "╭",
+                7: "├",
+                8: "╴",
+                9: "╯",
+                10: "─",
+                11: "┴",
+                12: "╮",
+                13: "┤",
+                14: "┬",
+                15: "┼",
+            }
+            for bit, (di, dj, char) in enumerate(checks):
+                ni, nj = i + di, j + dj
+                if 0 <= ni < len(arr) and 0 <= nj < len(arr[ni]):
+                    if arr[ni][nj] == char:
+                        mask |= 1 << bit
+            arr[i][j] = junction_map.get(mask, " ")
+
+        def walk(path):
+            for c in path:
+                if c == "N":
+                    cursor.left()
+                    cursor.up()
+                    stdout.write("░")
+                    cursor.left()
+                    cursor.up()
+                    stdout.write("░")
+                elif c == "S":
+                    cursor.left()
+                    cursor.down()
+                    stdout.write("░")
+                    cursor.left()
+                    cursor.down()
+                    stdout.write("░")
+                elif c == "E":
+                    stdout.write("░")
+                    stdout.write("░")
+                elif c == "W":
+                    cursor.left()
+                    cursor.left()
+                    stdout.write("░")
+                    cursor.left()
+                    cursor.left()
+                    stdout.write("░")
+
+        for i in range(0, m_h * 2 + 1, 2):
+            for j in range(0, m_w * 2 + 1, 2):
+                set_junction(out, i, j)
+
+        # the rendering
+        for line in out:
+            stdout.write("".join(line) + "\n")
+
+        cursor.move_to(self.start.x * 2 + 1, self.start.y * 2 + 1)
+        stdout.write("S")
+        walk(self.path)
+        cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
+        stdout.write("E")
+        cursor.move_to(0, term.height - 1)
+        input("Enter to exit...")
+        term.exit_alternate()
 
 
-viz = Visualizer()
-viz.read("output_maze.txt")
-term = Visualizer.Terminal()
-term.enter_alternate()
-viz.Cursor.move_to(1, 1)
-viz.render()
-input()
-term.exit_alternate()
+vis = Visualizer()
+vis.read("output_maze.txt")
+vis.render()
