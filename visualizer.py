@@ -219,6 +219,10 @@ class Visualizer:
                         mask |= 1 << bit
             arr[i][j] = junction_map.get(mask, " ")
 
+        for i in range(0, m_h * 2 + 1, 2):
+            for j in range(0, m_w * 2 + 1, 2):
+                set_junction(out, i, j)
+
         def walk(path):
             for c in path:
                 if c == "N":
@@ -246,9 +250,20 @@ class Visualizer:
                     cursor.left()
                     stdout.write("░")
 
-        for i in range(0, m_h * 2 + 1, 2):
-            for j in range(0, m_w * 2 + 1, 2):
-                set_junction(out, i, j)
+        # handling isolated cells
+        for mi in range(m_h):
+            for mj in range(m_w):
+                i = mi * 2 + 1
+                j = mj * 2 + 1
+                if all(
+                    [
+                        out[i - 1][j] == "─",
+                        out[i + 1][j] == "─",
+                        out[i][j + 1] == "│",
+                        out[i][j - 1] == "│",
+                    ]
+                ):
+                    out[i][j] = "█"
 
         # the rendering
         for line in out:
@@ -259,6 +274,9 @@ class Visualizer:
         walk(self.path)
         cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
         stdout.write("E")
-        cursor.move_to(0, term.height - 1)
+        cursor.move_to(0, term.height - 2)
+
+        stdout.write("\x1b[1;36mQ\x1b[0muit    \x1b[1;36mN\x1b[0mew maze    ")
+        stdout.write("\x1b[1;36mC\x1b[0molors    \x1b[1;36mP\x1b[0math\n")
         input("Enter to exit...")
         term.exit_alternate()
