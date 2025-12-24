@@ -19,9 +19,16 @@ def a_maze_ing(argv: list[str]):
         print("Usage: python3 a_maze_ing.py config.txt")
         exit(1)
     config_file = argv[1]
-    parser = ConfigParser()
+    config = ConfigParser()
     try:
-        parser.parse(config_file)
+        config.parse(config_file)
+        maze = ImperfectMazeGenerator(config)
+        maze.generate()
+        maze.export_ouput()
+
+        vis = Visualizer()
+        vis.read(config.output_file)
+        vis.render()
     except FileNotFoundError as e:
         print(f"Error: Configuration file not found: {config_file}")
         exit(1)
@@ -34,27 +41,6 @@ def a_maze_ing(argv: list[str]):
     except Exception as e:
         print(f"Unexpected error: {e}")
         exit(1)
-
-    if parser.width is None or parser.height is None:
-        return
-    if parser.entry is None or parser.exit is None:
-        return
-    maze = ImperfectMazeGenerator(
-        width=parser.width,
-        height=parser.height,
-        seed=parser.seed
-    )
-    maze.generate()
-    with open(parser.output_file, "w") as f:
-        f.write(maze.to_output_format())
-        f.write("\n\n")
-        f.write(f"{parser.entry[0]},{parser.entry[1]}\n")
-        f.write(f"{parser.exit[0]},{parser.exit[1]}\n")
-    print(f"Maze written to: {parser.output_file}")
-
-    vis = Visualizer()
-    vis.read(parser.output_file)
-    vis.render()
 
 
 if __name__ == "__main__":
