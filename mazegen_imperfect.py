@@ -1,4 +1,5 @@
-import random
+from random import randint, seed, choice
+from parser import ConfigParser
 
 
 class Cell:
@@ -32,13 +33,21 @@ class Cell:
 class ImperfectMazeGenerator:
     """Hunt-and-Kill algorithm for imperfect maze generation."""
 
-    def __init__(self, width: int, height: int, seed: int | None = None) -> None:
+    def __init__(self, config: ConfigParser) -> None:
         """Initialize maze generator."""
-        self.width = width
-        self.height = height
+        if config.width is None or config.height is None:
+            return
+        if config.entry is None or config.exit is None:
+            return
+        self.width = config.width
+        self.height = config.height
+        self.entry = config.entry
+        self.exit = config.exit
+        self.output_file = config.output_file 
+        self.perfect = config.perfect
         self.grid: list[list[Cell]] = []
-        if seed is not None:
-            random.seed(seed)
+        if config.seed is not None:
+            seed(config.seed)
         self._create_grid()
 
     def _create_grid(self) -> None:
@@ -48,7 +57,8 @@ class ImperfectMazeGenerator:
 
     def generate(self) -> None:
         """Generate imperfect maze using Hunt-and-Kill algorithm."""
-        current = self.grid[random.randint(0, self.height - 1)][random.randint(0, self.width - 1)]
+        current = self.grid[randint(
+            0, self.height - 1)][randint(0, self.width - 1)]
         current.visited = True
 
         while not self._all_visited():
@@ -63,7 +73,7 @@ class ImperfectMazeGenerator:
         if not neighbors:
             return cell
 
-        next_cell, direction = random.choice(neighbors)
+        next_cell, direction = choice(neighbors)
         cell.remove_wall(direction)
         next_cell.remove_wall(self._opposite(direction))
         next_cell.visited = True
@@ -79,7 +89,7 @@ class ImperfectMazeGenerator:
                 if not cell.visited:
                     neighbors = self._get_visited_neighbors(cell)
                     if neighbors:
-                        neighbor, direction = random.choice(neighbors)
+                        neighbor, direction = choice(neighbors)
                         cell.remove_wall(direction)
                         neighbor.remove_wall(self._opposite(direction))
                         cell.visited = True
@@ -139,9 +149,14 @@ class ImperfectMazeGenerator:
         """Get cell at coordinates."""
         return self.grid[y][x]
 
-    def to_output_format(self) -> str:
-        """Convert maze to hexadecimal output format."""
+    def export_ouput(self) -> None:
+        """Convert maze to hexadecimal and export to output file."""
         lines = []
         for row in self.grid:
             lines.append(''.join(cell.to_hex() for cell in row))
-        return '\n'.join(lines)
+        output = '\n'.join(lines)
+        with open(self.output_file, "w") as f:
+            f.write(output)
+            f.write("\n\n")
+            f.write(f"{self.entry[0]},{self.entry[1]}\n")
+            f.write(f"{self.exit[0]},{self.exit[1]}\n")
