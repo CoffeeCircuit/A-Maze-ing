@@ -1,4 +1,4 @@
-from random import randint, seed, choice
+from random import randint, seed, choice, sample
 from parser import ConfigParser
 
 
@@ -43,7 +43,7 @@ class ImperfectMazeGenerator:
         self.height = config.height
         self.entry = config.entry
         self.exit = config.exit
-        self.output_file = config.output_file 
+        self.output_file = config.output_file
         self.perfect = config.perfect
         self.grid: list[list[Cell]] = []
         if config.seed is not None:
@@ -66,6 +66,26 @@ class ImperfectMazeGenerator:
             found = self._hunt()
             if found:
                 current = found
+        if self.perfect is False:
+            self._create_loops()
+
+    def _create_loops(self) -> None:
+        """Remove random walls to create loops (imperfect maze)."""
+        removable_walls = []
+        for y in range(self.height):
+            for x in range(self.width):
+                cell = self.grid[y][x]
+                if x < self.width - 1 and cell.has_wall(Cell.EAST):
+                    removable_walls.append(
+                        (cell, self.grid[y][x + 1], Cell.EAST))
+                if y < self.height - 1 and cell.has_wall(Cell.SOUTH):
+                    removable_walls.append(
+                        (cell, self.grid[y + 1][x], Cell.SOUTH))
+        num_to_remove = int(len(removable_walls) * 0.1)
+        walls_to_remove = sample(removable_walls, num_to_remove)
+        for cell1, cell2, direction in walls_to_remove:
+            cell1.remove_wall(direction)
+            cell2.remove_wall(self._opposite(direction))
 
     def _kill(self, cell: Cell) -> Cell:
         """Recursively carve path from current cell."""
