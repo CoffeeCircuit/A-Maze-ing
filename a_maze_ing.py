@@ -9,6 +9,11 @@ from visualizer import Visualizer
 
 
 def a_maze_ing(argv: list[str]):
+    """Run maze generator and visualizer.
+    
+    Args:
+        config_file: Path to configuration file.
+    """
     if len(argv) != 2:
         print("Usage: python3 a_maze_ing.py config.txt")
         exit(1)
