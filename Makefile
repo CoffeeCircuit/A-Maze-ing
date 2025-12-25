@@ -15,6 +15,7 @@ clean:
 	find . -name .pytest_cache -exec rm -rf {} +
 	find . -name "*.pyc" -delete
 	find . -name "*.pyo" -delete
+	rm -f output_maze.txt
 
 lint:
 	uv run flake8 .

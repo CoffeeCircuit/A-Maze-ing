@@ -5,8 +5,10 @@ Main module
 
 from sys import argv, exit
 from parser import ConfigParser, ParsingError
+from pathfinder import PathFinder
 from visualizer import Visualizer
 from mazegen import MazeGenerator
+from mazegen_hak import HaKMazeGenerator
 
 
 def a_maze_ing(argv: list[str]):
@@ -19,9 +21,21 @@ def a_maze_ing(argv: list[str]):
         print("Usage: python3 a_maze_ing.py config.txt")
         exit(1)
     config_file = argv[1]
-    parser = ConfigParser()
+    config = ConfigParser()
     try:
-        parser.parse(config_file)
+        config.parse(config_file)
+        if config.algorithm == "HaK":
+            maze = HaKMazeGenerator(config)
+        else:
+            maze = MazeGenerator()
+            maze.parse(config)
+        maze.generate()
+        maze.save()
+        path = PathFinder(config.output_file)
+        path.save_path()
+        vis = Visualizer()
+        vis.read(config.output_file)
+        vis.render()
     except FileNotFoundError as e:
         print(f"Error: Configuration file not found: {config_file}")
         print(e)
@@ -35,15 +49,6 @@ def a_maze_ing(argv: list[str]):
     except Exception as e:
         print(f"Unexpected error: {e}")
         exit(1)
-
-    maze = MazeGenerator()
-    maze.parse(parser)
-    maze.generate()
-    maze.save()
-
-    vis = Visualizer()
-    vis.read(parser.output_file)
-    vis.render()
 
 
 if __name__ == "__main__":
