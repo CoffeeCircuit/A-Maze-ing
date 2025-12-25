@@ -43,6 +43,7 @@ class ConfigParser:
         self.output_file: Union[str, PathLike[str]] = ""
         self.perfect: bool | None = None
         self.seed: int | None = None
+        self.algo: str = "dfs"
 
     def parse(self, file: Union[str, PathLike[str]]) -> None:
         """Parse configuration file.
@@ -79,6 +80,8 @@ class ConfigParser:
                 self.perfect = val == "True"
             elif key == "SEED":
                 self.seed = int(val)
+            elif key == "ALGORITHM" and val == "hak":
+                self.algo = val
 
         self._validate()
 
