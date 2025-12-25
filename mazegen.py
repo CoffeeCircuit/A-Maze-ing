@@ -1,18 +1,21 @@
 from random import shuffle, seed
 from parser import ConfigParser
 from os import PathLike
+from typing import Union
 
 
 class MazeGenerator:
 
-    def __init__(self) -> None:
+    def __init__(self, config: ConfigParser) -> None:
         self._grid: list[list[int]] | None = None
-        self._output: PathLike | None = None
+        self._output: Union[str, PathLike[str]] | None = None
         self._width: int | None = None
         self._height: int | None = None
         self._entry: tuple[int, int] | None = None
         self._exit: tuple[int, int] | None = None
         self.m_seed = None
+        self.parse(config)
+
 
     def parse(self, parser: ConfigParser):
         self._width = parser.width
@@ -21,6 +24,8 @@ class MazeGenerator:
         self._exit = parser.exit
         self._output = parser.output_file
         self.m_seed = parser.seed
+        assert self._width is not None
+        assert self._height is not None
         self._grid = [[15 for _ in range(self._width)] for _ in range(self._height)]
 
     def _dfs(self):
@@ -67,6 +72,8 @@ class MazeGenerator:
         assert self._height is not None
         assert self._grid is not None
         assert self._output is not None
+        assert self._entry is not None
+        assert self._exit is not None
         out = ""
         for i in range(self._height):
             for j in range(self._width):
