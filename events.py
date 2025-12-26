@@ -1,19 +1,19 @@
-import sys
-import termios
-import tty
-import select
+from select import select
+from sys import stdin
+from termios import tcgetattr, tcsetattr, TCSADRAIN
+from tty import setcbreak
 
 
 def get_key():
-    dr, _, _ = select.select([sys.stdin], [], [], 0)
+    dr, _, _ = select([stdin], [], [], 0)
     if not dr:
         return None
 
-    ch = sys.stdin.read(1)
+    ch = stdin.read(1)
 
     if ch == "\x1b":  # ESC
-        ch1 = sys.stdin.read(1)
-        ch2 = sys.stdin.read(1)
+        ch1 = stdin.read(1)
+        ch2 = stdin.read(1)
         print(f"{ch1=}, {ch2=}")
         if ch1 == "[" and ch2 == "A":
             return "up"
@@ -24,14 +24,14 @@ def get_key():
 
 
 def enable_raw_mode():
-    fd = sys.stdin.fileno()
-    old = termios.tcgetattr(fd)
-    tty.setcbreak(fd)
+    fd = stdin.fileno()
+    old = tcgetattr(fd)
+    setcbreak(fd)
     return old
 
 
 def disable_raw_mode(old):
-    termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old)
+    tcsetattr(stdin.fileno(), TCSADRAIN, old)
 
 
 old = enable_raw_mode()

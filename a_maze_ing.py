@@ -34,7 +34,11 @@ def a_maze_ing(argv: list[str]):
         path.save_path()
         vis = Visualizer()
         vis.read(config.output_file)
-        vis.render()
+
+        # TODO the vis.render() method may return a new seed in which case 
+        # the whole generation has to be rerun
+        vis.render() 
+
     except FileNotFoundError as e:
         print(f"Error: Configuration file not found: {config_file}")
         print(e)
