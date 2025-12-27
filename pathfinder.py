@@ -39,7 +39,7 @@ class PathFinder:
             row = [int(c, 16) for c in line]
             self.grid.append(row)
             idx += 1
-        
+
         self.height = len(self.grid)
         self.width = len(self.grid[0]) if self.grid else 0
 
@@ -60,7 +60,7 @@ class PathFinder:
         """Find shortest path using BFS.
 
         Returns:
-            Path as string of directions (N, E, S, W) or None if no path exists.
+            Path as string of directions(N, E, S, W) or None if no path exists.
         """
         start = self.entry
         end = self.exit

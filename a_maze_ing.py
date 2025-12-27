@@ -4,6 +4,7 @@ Main module
 """
 
 from sys import argv, exit
+from typing import Any
 from parser import ConfigParser, ParsingError
 from pathfinder import PathFinder
 from visualizer import Visualizer
@@ -11,7 +12,7 @@ from mazegen import MazeGenerator
 from mazegen_hak import HaKMazeGenerator
 
 
-def a_maze_ing(argv: list[str]):
+def a_maze_ing(argv: list[str]) -> None:
     """Run maze generator and visualizer.
 
     Args:
@@ -26,8 +27,8 @@ def a_maze_ing(argv: list[str]):
         config.parse(config_file)
         regenerate = True
         while (regenerate):
-            if config.algo == "hak" or config.perfect == False:
-                maze = HaKMazeGenerator(config)
+            if config.algo == "hak" or config.perfect is False:
+                maze: Any = HaKMazeGenerator(config)
             else:
                 maze = MazeGenerator(config)
             maze.generate()
@@ -36,7 +37,7 @@ def a_maze_ing(argv: list[str]):
             path.save_path()
             vis = Visualizer()
             vis.read(config.output_file)
-            regenerate, config.seed = vis.render() 
+            regenerate, config.seed = vis.render()
 
     except FileNotFoundError as e:
         print(f"Error: Configuration file not found: {config_file}")

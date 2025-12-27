@@ -6,7 +6,7 @@ Ref: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 """
 
 from os import PathLike
-from typing import Union
+from typing import Union, Any
 from enum import IntEnum
 from shutil import get_terminal_size
 from sys import stdout, stdin
@@ -16,19 +16,39 @@ from tty import setcbreak
 
 
 class Point:
-    def __init__(self, x, y) -> None:
+    """Represents a 2D point with x and y coordinates."""
+
+    def __init__(self, x: int, y: int) -> None:
+        """Initialize point at coordinates (x, y).
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+        """
         self.x = x
         self.y = y
 
 
 class Cell(Point):
-    def __init__(self, x, y, walls=0) -> None:
+    """Represents a maze cell with position and wall configuration."""
+
+    def __init__(self, x: int, y: int, walls: int = 0) -> None:
+        """Initialize cell at coordinates (x, y) with wall configuration.
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+            walls: Wall configuration as bit flags (default: 0).
+        """
         super().__init__(x, y)
         self.walls = walls
 
 
 class Graphics:
+    """ANSI escape code utilities for terminal graphics."""
+
     class Color(IntEnum):
+        """ANSI color codes."""
         Red = 31
         Green = 32
         Yellow = 33
@@ -38,18 +58,30 @@ class Graphics:
         Default = 39
 
     @staticmethod
-    def set(color: Color, background=False):
+    def set(color: "Graphics.Color", background: bool = False) -> None:
+        """Set terminal text or background color.
+
+        Args:
+            color: Color to set.
+            background: If True, set background color; otherwise text color.
+        """
         if background:
             stdout.write(f"\x1b{color};{color + 10}m")
         else:
             stdout.write(f"\x1b[{color}m")
 
     @staticmethod
-    def reset():
+    def reset() -> None:
+        """Reset terminal colors to default."""
         stdout.write("\x1b[0m")
 
     @staticmethod
-    def menu(item: str):
+    def menu(item: str) -> None:
+        """Display menu item with first character highlighted.
+
+        Args:
+            item: Menu item text to display.
+        """
         Graphics.set(Graphics.Color.Cyan)
         stdout.write(item[0])
         Graphics.reset()
@@ -57,6 +89,8 @@ class Graphics:
 
 
 class Visualizer:
+    """Interactive terminal-based maze visualizer."""
+
     menu = {
         "Main": ["New maze", "Color", "Path", "Quit"],
         "Color": {
@@ -67,24 +101,37 @@ class Visualizer:
     }
 
     class Keyboard:
-        """
-        Event handler for the keyboard
-        """
+        """Event handler for keyboard input in raw mode."""
 
         @staticmethod
-        def enable_raw_mode():
+        def enable_raw_mode() -> list[Any]:
+            """Enable raw keyboard input mode.
+
+            Returns:
+                Previous terminal attributes for restoration.
+            """
             fd = stdin.fileno()
             old = tcgetattr(fd)
             setcbreak(fd)
             return old
 
         @staticmethod
-        def disable_raw_mode(old):
+        def disable_raw_mode(old: list[Any]) -> None:
+            """Restore terminal to normal mode.
+
+            Args:
+                old: Previous terminal attributes from enable_raw_mode().
+            """
             tcsetattr(stdin.fileno(), TCSADRAIN, old)
 
         @staticmethod
-        def get_key():
+        def get_key() -> str | None:
+            """Get a single keypress without blocking.
 
+            Returns:
+                Key character or special key name ('up'), or None if no key
+                pressed.
+            """
             dr, _, _ = select([stdin], [], [], 0)
             if not dr:
                 return None
@@ -97,74 +144,121 @@ class Visualizer:
             return ch
 
     class Cursor:
+        """Terminal cursor manipulation utilities."""
+
         @staticmethod
-        def up(n=1):
+        def up(n: int = 1) -> None:
+            """Move cursor up by n lines.
+
+            Args:
+                n: Number of lines to move (default: 1).
+            """
             stdout.write(f"\x1b[{n}A")
 
         @staticmethod
-        def up_and_begining(n=1):
+        def up_and_begining(n: int = 1) -> None:
+            """Move cursor up n lines to beginning of line.
+
+            Args:
+                n: Number of lines to move (default: 1).
+            """
             stdout.write(f"\x1b[{n}F")
 
         @staticmethod
-        def down(n=1):
+        def down(n: int = 1) -> None:
+            """Move cursor down by n lines.
+
+            Args:
+                n: Number of lines to move (default: 1).
+            """
             stdout.write(f"\x1b[{n}B")
 
         @staticmethod
-        def right(n=1):
+        def right(n: int = 1) -> None:
+            """Move cursor right by n columns.
+
+            Args:
+                n: Number of columns to move (default: 1).
+            """
             stdout.write(f"\x1b[{n}C")
 
         @staticmethod
-        def left(n=1):
+        def left(n: int = 1) -> None:
+            """Move cursor left by n columns.
+
+            Args:
+                n: Number of columns to move (default: 1).
+            """
             stdout.write(f"\x1b[{n}D")
 
         @staticmethod
-        def save():
+        def save() -> None:
+            """Save current cursor position."""
             stdout.write("\x1b7")
 
         @staticmethod
-        def load():
+        def load() -> None:
+            """Restore saved cursor position."""
             stdout.write("\x1b8")
 
         @staticmethod
-        def hide():
+        def hide() -> None:
+            """Hide terminal cursor."""
             stdout.write("\x1b[?25l")
 
         @staticmethod
-        def show():
+        def show() -> None:
+            """Show terminal cursor."""
             stdout.write("\x1b[?25h")
 
         @staticmethod
         def home() -> None:
+            """Move cursor to home position (0, 0)."""
             stdout.write("\x1b[H")
 
         @staticmethod
-        def move_to(x, y):
+        def move_to(x: int, y: int) -> None:
+            """Move cursor to specific position.
+
+            Args:
+                x: Column position (0-indexed).
+                y: Row position (0-indexed).
+            """
             stdout.write(f"\x1b[{y+1};{x+1}H")
-        
+
         @staticmethod
-        def clear_line():
+        def clear_line() -> None:
+            """Clear current line and move cursor to beginning."""
             stdout.write("\x1b[2K\x1b[0G")
 
     class Terminal:
+        """Terminal properties and control."""
+
         def __init__(self) -> None:
+            """Initialize terminal with current size."""
             self.width, self.height = get_terminal_size()
 
-        def update(self):
+        def update(self) -> None:
+            """Update terminal dimensions."""
             self.width, self.height = get_terminal_size()
 
         @staticmethod
         def clear() -> None:
+            """Clear entire terminal screen."""
             stdout.write("\x1b[2J")
 
         @staticmethod
         def enter_alternate() -> None:
+            """Enter alternate screen buffer."""
             stdout.write("\x1b[?1049h")
 
         @staticmethod
         def exit_alternate() -> None:
+            """Exit alternate screen buffer and restore original."""
             stdout.write("\x1b[?1049l")
 
     def __init__(self) -> None:
+        """Initialize visualizer with default settings."""
         self.maze: list[list[Cell]]
         self.start: Point
         self.end: Point
@@ -174,9 +268,14 @@ class Visualizer:
         self.wall_color: Graphics.Color = Graphics.Color.Default
         self.path_color: Graphics.Color = Graphics.Color.Green
         self.logo_color: Graphics.Color = Graphics.Color.Yellow
-        self.path_symbol = "░"
+        self.path_symbol: str = "░"
 
-    def read(self, file: Union[str, PathLike]) -> None:
+    def read(self, file: Union[str, PathLike[str]]) -> None:
+        """Load maze from output file.
+
+        Args:
+            file: Path to maze file containing grid, entry, exit, and path.
+        """
         maze: list[list[Cell]] = []
         with open(file, "r") as fp:
             for y, line in enumerate(fp):
@@ -202,7 +301,13 @@ class Visualizer:
         self.width = len(maze[0]) * 3
         self.height = len(maze) * 3
 
-    def render(self):
+    def render(self) -> tuple[bool, int | None]:
+        """Render and interact with maze visualization.
+
+        Returns:
+            Tuple of (should_regenerate, new_seed).
+            (False, None) means quit, (True, seed) means regenerate maze.
+        """
         term = Visualizer.Terminal()
         cursor = Visualizer.Cursor()
         N = 0b0001
@@ -213,8 +318,8 @@ class Visualizer:
         m_w = len(self.maze[0])
         out = [[" " for _ in range(m_w * 2 + 1)] for _ in range(m_h * 2 + 1)]
 
-        def _walls():
-
+        def _walls() -> None:
+            """Render maze walls and junctions."""
             checks = [
                 (-1, 0, "│"),
                 (0, 1, "─"),
@@ -267,7 +372,8 @@ class Visualizer:
                 stdout.write("".join(line) + "\n")
             Graphics.reset()
 
-        def _logo():
+        def _logo() -> None:
+            """Render logo (filled cells with all walls)."""
             m_h = len(self.maze)
             m_w = len(self.maze[0])
             Graphics.set(self.logo_color)
@@ -280,7 +386,8 @@ class Visualizer:
                         stdout.write("█")
             Graphics.reset()
 
-        def _path():
+        def _path() -> None:
+            """Render solution path through maze."""
             Graphics.set(self.path_color)
             for c in self.path:
                 if c == "N":
@@ -313,7 +420,7 @@ class Visualizer:
         mode = Visualizer.Keyboard.enable_raw_mode()
         refresh = True
         menu_type = "Main"
-        menu = Visualizer.menu
+        menu: Any = Visualizer.menu
         term.enter_alternate()
 
         try:
@@ -348,10 +455,10 @@ class Visualizer:
                             Visualizer.Keyboard.disable_raw_mode(mode)
                             new_seed = input("Enter seed: ")
                             if new_seed == "":
-                                new_seed = None
+                                new_seed_value = None
                             else:
-                                new_seed = int(new_seed)
-                            return True, new_seed
+                                new_seed_value = int(new_seed)
+                            return True, new_seed_value
                         case "c" if menu_type == "Main":
                             menu_type = "Color"
                             refresh = True
@@ -474,4 +581,3 @@ class Visualizer:
             Visualizer.Keyboard.disable_raw_mode(mode)
             cursor.show()
             term.exit_alternate()
-        return 0

@@ -1,3 +1,9 @@
+"""
+Maze generator using depth-first search algorithm.
+
+Generates perfect mazes (no loops) using recursive backtracking DFS.
+"""
+
 from random import shuffle, seed
 from parser import ConfigParser
 from os import PathLike
@@ -5,19 +11,29 @@ from typing import Union
 
 
 class MazeGenerator:
+    """Generate perfect mazes using DFS algorithm."""
 
     def __init__(self, config: ConfigParser) -> None:
+        """Initialize maze generator from configuration.
+
+        Args:
+            config: Parsed configuration containing maze parameters.
+        """
         self._grid: list[list[int]] | None = None
         self._output: Union[str, PathLike[str]] | None = None
         self._width: int | None = None
         self._height: int | None = None
         self._entry: tuple[int, int] | None = None
         self._exit: tuple[int, int] | None = None
-        self.m_seed = None
+        self.m_seed: int | None = None
         self.parse(config)
 
+    def parse(self, parser: ConfigParser) -> None:
+        """Parse configuration and initialize grid.
 
-    def parse(self, parser: ConfigParser):
+        Args:
+            parser: Configuration parser with maze parameters.
+        """
         self._width = parser.width
         self._height = parser.height
         self._entry = parser.entry
@@ -26,9 +42,12 @@ class MazeGenerator:
         self.m_seed = parser.seed
         assert self._width is not None
         assert self._height is not None
-        self._grid = [[15 for _ in range(self._width)] for _ in range(self._height)]
+        self._grid = [[15 for _ in range(self._width)]
+                      for _ in range(self._height)]
 
-    def _dfs(self):
+    def _dfs(self) -> None:
+        """Generate maze using depth-first search with recursive backtracking.
+        """
         assert self._entry is not None
         assert self._grid is not None
         assert self._width is not None
@@ -57,17 +76,31 @@ class MazeGenerator:
             if not moved:
                 stack.pop()
 
-    def generate(self, algo="dfs"):
+    def generate(self, algo: str = "dfs") -> None:
+        """Generate maze using specified algorithm.
+
+        Args:
+            algo: Algorithm to use for maze generation (default: "dfs").
+                  Currently only "dfs" is supported.
+
+        Note:
+            Future algorithms that could be added:
+            - Prim's algorithm
+            - Kruskal's algorithm
+            - Wilson's algorithm
+            - Aldous-Broder algorithm
+        """
         if algo == "dfs":
             self._dfs()
-        # can add more maze generating algorithms:
-        #   - Prim
-        #   - Kruskal
-        #   - Wilson
-        #   - Aldons-Broder
-        #   - https://www.youtube.com/watch?v=ioUl1M77hww
 
-    def save(self):
+    def save(self) -> None:
+        """Save maze to output file in hexadecimal format.
+
+        Output format:
+            - Maze grid in hexadecimal (one character per cell)
+            - Entry coordinates (x, y)
+            - Exit coordinates (x, y)
+        """
         assert self._width is not None
         assert self._height is not None
         assert self._grid is not None

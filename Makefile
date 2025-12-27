@@ -18,17 +18,17 @@ clean:
 	rm -f output_maze.txt
 
 lint:
-	uv run flake8 .
+	uv run flake8 *.py
 	uv run mypy . \
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \
 		--disallow-untyped-defs \
 		--check-untyped-defs \
-		--exclude '(^\.venv/)'
+		--exclude '(^\.venv/|^test/|^subject/)'
 
 lint-strict:
-	uv run flake8 .
+	uv run flake8 *.py
 	uv run mypy . \
 		--strict \
-		--exclude '(^\.venv/)'
+		--exclude '(^\.venv/|^test/|^subject/)'
