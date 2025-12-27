@@ -341,12 +341,17 @@ class Visualizer:
                 if key:
                     match key.lower():
                         case "q":
-                            break
+                            return False, None
                         case 'n' if menu_type == "Main":
                             cursor.clear_line()
                             cursor.show()
                             Visualizer.Keyboard.disable_raw_mode(mode)
-                            return input("Enter seed: ")
+                            new_seed = input("Enter seed: ")
+                            if new_seed == "":
+                                new_seed = None
+                            else:
+                                new_seed = int(new_seed)
+                            return True, new_seed
                         case "c" if menu_type == "Main":
                             menu_type = "Color"
                             refresh = True

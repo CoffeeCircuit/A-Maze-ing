@@ -24,20 +24,19 @@ def a_maze_ing(argv: list[str]):
     config = ConfigParser()
     try:
         config.parse(config_file)
-        if config.algo == "hak" or config.perfect == False:
-            maze = HaKMazeGenerator(config)
-        else:
-            maze = MazeGenerator(config)
-        maze.generate()
-        maze.save()
-        path = PathFinder(config.output_file)
-        path.save_path()
-        vis = Visualizer()
-        vis.read(config.output_file)
-
-        # TODO the vis.render() method may return a new seed in which case 
-        # the whole generation has to be rerun
-        vis.render() 
+        regenerate = True
+        while (regenerate):
+            if config.algo == "hak" or config.perfect == False:
+                maze = HaKMazeGenerator(config)
+            else:
+                maze = MazeGenerator(config)
+            maze.generate()
+            maze.save()
+            path = PathFinder(config.output_file)
+            path.save_path()
+            vis = Visualizer()
+            vis.read(config.output_file)
+            regenerate, config.seed = vis.render() 
 
     except FileNotFoundError as e:
         print(f"Error: Configuration file not found: {config_file}")
