@@ -73,6 +73,7 @@ clean:
 	find . -name "*.pyo" -delete
 	rm -rf .venv
 	rm -rf dist
+	rm -f mazegen*.whl
 	@if [ -f config.txt ]; then \
 		echo rm -f "$(OUTPUT_FILE)"; \
 		rm -f "$(OUTPUT_FILE)"; \
