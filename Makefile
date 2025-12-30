@@ -3,6 +3,8 @@
 PYTHON := $(shell command -v python3 2>/dev/null)
 UV := $(shell command -v uv 2>/dev/null)
 ARGS := $(wordlist 2, 999, $(MAKECMDGOALS))
+OUTPUT_FILE := $(shell grep -i output_file config.txt | cut -d= -f2 | xargs)
+WHEEL := dist/*.whl
 
 install:
 	@echo "Checking for dependencies..."
@@ -41,11 +43,17 @@ uninstall:
 	rm -rf $(shell uv tool dir)
 	rm -rf ~/.local/bin/uv ~/.local/bin/uvx
 
+build:
+	uv build
+	mv $(WHEEL) .
+	rm -rf dist
+
 run:
-	@echo "Running with args: $(ARGS)"
-	@if [ ! -d "./.venv" ]; then \
-		uv venv; \
-	fi; \
+	@if [ ! -d .venv ]; then \
+		echo "Run make install first..."; \
+		exit 1; \
+	fi
+	@echo "Running with args: $(ARGS)"; \
 	. ./.venv/bin/activate; \
 	echo "Python used: $$(which python)"; \
 	uv run python a_maze_ing.py $(ARGS)
@@ -62,10 +70,18 @@ clean:
 	find . -name .pytest_cache -exec rm -rf {} +
 	find . -name "*.pyc" -delete
 	find . -name "*.pyo" -delete
-	rm -f output_maze.txt
 	rm -rf .venv
+	rm -rf dist
+	@if [ -f config.txt ]; then \
+		echo rm -f "$(OUTPUT_FILE)"; \
+		rm -f "$(OUTPUT_FILE)"; \
+	fi
 
 lint:
+	@if [ ! -d .venv ]; then \
+		echo "Run make install first..."; \
+		exit 1; \
+	fi
 	uv run flake8 *.py
 	uv run mypy . \
 		--warn-return-any \
@@ -76,7 +92,23 @@ lint:
 		--exclude '(^\.venv/|^test/|^subject/)'
 
 lint-strict:
+	@if [ ! -d .venv ]; then \
+		echo "Run make install first..."; \
+		exit 1; \
+	fi
 	uv run flake8 *.py
 	uv run mypy . \
 		--strict \
 		--exclude '(^\.venv/|^test/|^subject/)'
+
+
+help:
+	@echo "Available targets:"
+	@echo "  install        Install dependencies and set up the virtual environment"
+	@echo "  uninstall      Removes all Python versions and dependencies newly installed"
+	@echo "  build          Compiles the wheel file"
+	@echo "  run            Run the application"
+	@echo "  lint           Run flake8 and mypy"
+	@echo "  lint-strict    Run strict mypy checks"
+	@echo "  clean          Remove caches and temporary files"
+	@echo "  debug          Run the debugger"
