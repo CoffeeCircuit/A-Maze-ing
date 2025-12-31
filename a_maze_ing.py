@@ -5,6 +5,7 @@ Main module
 
 from sys import argv, exit
 from pathfinder import PathFinder
+import mazegen
 from mazegen import MazeGenerator, Visualizer
 
 
@@ -37,4 +38,5 @@ def a_maze_ing(argv: list[str]) -> None:
 
 
 if __name__ == "__main__":
+    print(f"Running mazegen from: {mazegen.__file__}")
     a_maze_ing(argv)

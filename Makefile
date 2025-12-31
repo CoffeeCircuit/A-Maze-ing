@@ -88,13 +88,14 @@ run:
 		echo "Run make install first..."; \
 		exit 1; \
 	fi
-	@echo "Running with args: $(ARGS)"; \
-	. ./.venv/bin/activate; \
-	echo "Python used: $$(which python)"; \
-	uv run python a_maze_ing.py $(ARGS)
-
-%:
-	@:
+	@echo "Running with args: $(ARGS)"
+	@sh -c '\
+		mv mazegen mazegen.bak; \
+		trap "mv mazegen.bak mazegen" EXIT; \
+		. ./.venv/bin/activate; \
+		echo "Python used: $$(which python)"; \
+		uv run python a_maze_ing.py $(ARGS); \
+	'
 
 debug:
 	uv run python -m pdb a_maze_ing.py $(ARGS)
@@ -146,6 +147,7 @@ help:
 	@echo "  build          Compiles the wheel file"
 	@echo "  config         Set a config.txt file for the maze generation"
 	@echo "  run            Run the application"
+	@echo "                 $$ make run ARGS=config.txt"
 	@echo "  lint           Run flake8 and mypy"
 	@echo "  lint-strict    Run strict mypy checks"
 	@echo "  clean          Remove caches and temporary files"
