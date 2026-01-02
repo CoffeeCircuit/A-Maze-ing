@@ -1,4 +1,11 @@
-__all__ = ["dfs", "hak", "mazegen", "visualizer", "mask_42"]
+__all__ = [
+    "dfs",
+    "hak",
+    "MazeGenerator",
+    "Graphics",
+    "Visualizer",
+    "make_p42_mask",
+]
 
 from .dfs import dfs
 from .hak import hak
