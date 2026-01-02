@@ -1,4 +1,4 @@
-.PHONY: install uninstall run debug clean lint lint-strict
+.PHONY: install uninstall build run debug clean lint lint-strict
 
 PYTHON := $(shell command -v python3 2>/dev/null)
 UV := $(shell command -v uv 2>/dev/null)

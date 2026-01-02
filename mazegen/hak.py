@@ -1,7 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from random import seed, choice
+from .mask_42 import make_p42_mask
+
+if TYPE_CHECKING:
+    from .mazegen import MazeGenerator
 
 
-def hak(maze) -> None:
+def hak(maze: MazeGenerator) -> None:
     """
     Hunt-and-Kill maze generation algorithm using integer grid format.
 
@@ -15,6 +21,7 @@ def hak(maze) -> None:
     assert maze.entry is not None
 
     seed(maze.seed)
+    blocked = make_p42_mask(maze)
     width = maze.width
     height = maze.height
     grid = maze.grid
@@ -25,14 +32,20 @@ def hak(maze) -> None:
     cx, cy = maze.entry
     visited.add((cx, cy))
 
-    def kill(x, y):
+    def kill(x: int, y: int) -> tuple[int, int]:
+        """
+        Hunt stage of the algoruithm
+
+        :param x: Coordinate
+        :param y: Coordinate
+        """
         while True:
             neighbors = []
 
             for i, (dx, dy) in enumerate(DIRS):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < height and 0 <= ny < width:
-                    if (nx, ny) not in visited:
+                    if (nx, ny) not in visited and (nx, ny) not in blocked:
                         neighbors.append((nx, ny, i))
 
             if not neighbors:
@@ -46,17 +59,20 @@ def hak(maze) -> None:
             visited.add((nx, ny))
             x, y = nx, ny
 
-    def hunt():
+    def hunt() -> tuple[int, int] | None:
+        """
+        Hunt stage of the algorithm
+        """
         for x in range(height):
             for y in range(width):
-                if (x, y) in visited:
+                if (x, y) in visited or (x, y) in blocked:
                     continue
 
                 candidates = []
                 for i, (dx, dy) in enumerate(DIRS):
                     nx, ny = x + dx, y + dy
                     if 0 <= nx < height and 0 <= ny < width:
-                        if (nx, ny) in visited:
+                        if (nx, ny) in visited and (x, y) not in blocked:
                             candidates.append((nx, ny, i))
 
                 if candidates:

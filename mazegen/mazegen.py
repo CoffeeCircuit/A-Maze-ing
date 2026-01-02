@@ -17,63 +17,63 @@ class MazeGenerator:
         self._algorithm: str | None = None
 
     @property
-    def grid(self):
+    def grid(self) -> list[list[int]] | None:
         return self._grid
 
     @grid.setter
-    def grid(self, grid: list[list[int]]):
+    def grid(self, grid: list[list[int]]) -> None:
         self._grid = grid
 
     @property
-    def output(self):
+    def output(self) -> Union[str, PathLike[str]] | None:
         return self._output
 
     @output.setter
-    def output(self, file: Union[str, PathLike[str]]):
+    def output(self, file: Union[str, PathLike[str]]) -> None:
         self.output = file
 
     @property
-    def width(self):
+    def width(self) -> int | None:
         return self._width
 
     @width.setter
-    def width(self, width: int):
+    def width(self, width: int) -> None:
         self._width = width
 
     @property
-    def height(self):
+    def height(self) -> int | None:
         return self._height
 
     @height.setter
-    def height(self, height: int):
+    def height(self, height: int) -> None:
         self._height = height
 
     @property
-    def entry(self):
+    def entry(self) -> tuple[int, int] | None:
         return self._entry
 
     @entry.setter
-    def entry(sefl, entry: tuple[int, int]):
+    def entry(sefl, entry: tuple[int, int]) -> None:
         sefl._entry = entry
 
     @property
-    def exit(self):
+    def exit(self) -> tuple[int, int] | None:
         return self._exit
 
     @property
-    def seed(self):
+    def seed(self) -> int | None:
         return self._seed
 
     @seed.setter
-    def seed(self, seed: int | None = None):
+    def seed(self, seed: int | None = None) -> None:
         self._seed = seed
 
     @property
-    def algorithm(self):
+    def algorithm(self) -> str | None:
         return self._algorithm
 
     @algorithm.setter
-    def algorithm(self, algorithm: str):
+    def algorithm(self, algorithm: str) -> None:
         self._algorithm = algorithm
 
     def read(self, file: Union[str, PathLike[str]] = "config.txt") -> None:
@@ -147,6 +147,9 @@ class MazeGenerator:
         if data.get("width") == 0 or data.get("height") == 0:
             raise ValueError("width and/or height must be greater than zero")
 
+        if data.get("entry") == data.get("exit"):
+            raise ValueError("Entry and and exit must be different")
+
         entry = data.get("entry")
         exit_ = data.get("exit")
         width = data.get("width")
@@ -187,7 +190,7 @@ class MazeGenerator:
         self._seed = data.get("seed")
         self._algorithm = data.get("algorithm")
 
-    def write(self):
+    def write(self) -> None:
         """
         Write the maze configuration to the output_file from config.txt
         """
@@ -202,7 +205,7 @@ class MazeGenerator:
                 if self._exit:
                     fp.write(f"{self._exit[0]}, {self._exit[1]}\n")
 
-    def generate(self):
+    def generate(self) -> None:
         match self._algorithm:
             case "dfs":
                 dfs(self)
@@ -211,7 +214,7 @@ class MazeGenerator:
             case _:
                 dfs(self)
 
-    def reset(self):
+    def reset(self) -> None:
         assert self._width is not None
         assert self._height is not None
         width = self._width

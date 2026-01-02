@@ -4,50 +4,27 @@ Maze generator using depth-first search algorithm.
 Generates perfect mazes (no loops).
 """
 
+from __future__ import annotations
 from random import shuffle, seed
+from .mask_42 import make_p42_mask
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .mazegen import MazeGenerator
 
 
-def dfs(maze) -> None:
+def dfs(maze: MazeGenerator) -> None:
+    """
+    Depth-first-search algorim used by the MazeGenerator class
+
+    :param maze: MazeGenerator class
+    """
     assert maze.entry is not None
     assert maze.height is not None
     assert maze.width is not None
     assert maze.grid is not None
 
-    # 42 pattern
-    p42 = [
-        [
-            (
-                1
-                if (x - (maze.width // 2), y - (maze.height // 2))
-                in [
-                    (-3, -2),
-                    (-1, -2),
-                    (1, -2),
-                    (2, -2),
-                    (3, -2),
-                    (-3, -1),
-                    (-1, -1),
-                    (3, -1),
-                    (-3, 0),
-                    (-2, 0),
-                    (-1, 0),
-                    (1, 0),
-                    (2, 0),
-                    (3, 0),
-                    (-1, 1),
-                    (1, 1),
-                    (-1, 2),
-                    (1, 2),
-                    (2, 2),
-                    (3, 2),
-                ]
-                else 0
-            )
-            for x in range(maze.width)
-        ]
-        for y in range(maze.height)
-    ]
-
+    blocked = make_p42_mask(maze)
     seed(maze.seed)
     stack: list[tuple[int, int]] = [maze.entry]
     visited: set[tuple[int, int]] = {maze.entry}
@@ -60,7 +37,7 @@ def dfs(maze) -> None:
         moved = False
         for dx, dy in dir:
             if 0 <= x + dx < maze.height and 0 <= y + dy < maze.width:
-                if p42[x + dx][y + dy]:
+                if (x + dx, y + dy) in blocked:
                     continue
                 if (x + dx, y + dy) not in visited:
                     stack.append((x + dx, y + dy))
