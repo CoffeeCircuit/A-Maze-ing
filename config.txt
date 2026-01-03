@@ -1,5 +1,5 @@
 # This file is read by a_maze_ing.py
-WIDTH=30
+WIDTH=25
 HEIGHT=25
 ENTRY=0,0
 EXIT=19, 14
@@ -8,4 +8,4 @@ PERFECT=True
 
 # The flags below are optional
 # SEED=42
- ALGORITHM=dfs
+# ALGORITHM=hak

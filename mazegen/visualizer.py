@@ -49,6 +49,7 @@ class Graphics:
 
     class Color(IntEnum):
         """ANSI color codes."""
+
         Red = 31
         Green = 32
         Yellow = 33
@@ -436,6 +437,9 @@ class Visualizer:
                     _path()
                     cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
                     stdout.write("E")
+                    if self.width <= 18 or self.height <= 18:
+                        cursor.move_to(0, term.height - 3)
+                        stdout.write("Info: Maze too small for the 42 pattern")
                     cursor.move_to(0, term.height - 2)
                     stdout.write("─" * term.width)
                     for item in menu[menu_type]:
@@ -449,7 +453,7 @@ class Visualizer:
                     match key.lower():
                         case "q":
                             return False, None
-                        case 'n' if menu_type == "Main":
+                        case "n" if menu_type == "Main":
                             cursor.clear_line()
                             cursor.show()
                             Visualizer.Keyboard.disable_raw_mode(mode)

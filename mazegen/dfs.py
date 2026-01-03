@@ -37,7 +37,7 @@ def dfs(maze: MazeGenerator) -> None:
         moved = False
         for dx, dy in dir:
             if 0 <= x + dx < maze.height and 0 <= y + dy < maze.width:
-                if (x + dx, y + dy) in blocked:
+                if blocked and (x + dx, y + dy) in blocked:
                     continue
                 if (x + dx, y + dy) not in visited:
                     stack.append((x + dx, y + dy))

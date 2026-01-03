@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from .mazegen import MazeGenerator
 
 
-def make_p42_mask(maze: MazeGenerator) -> set[tuple[int, int]]:
+def make_p42_mask(maze: MazeGenerator) -> set[tuple[int, int]] | None:
     """
     Function sets a mask of the 42 log in the center of the maze
     This is used in the dfs and hak maze generators
@@ -18,7 +18,7 @@ def make_p42_mask(maze: MazeGenerator) -> set[tuple[int, int]]:
     else:
         raise ValueError("Width and/or height can't be None")
 
-    blocked_offsets = {
+    patern_7x5 = {
         (-3, -2),
         (-1, -2),
         (1, -2),
@@ -41,12 +41,36 @@ def make_p42_mask(maze: MazeGenerator) -> set[tuple[int, int]]:
         (3, 2),
     }
 
-    blocked = set()
+    patern_5x5 = {
+        (-2, -2),
+        (1, -2),
+        (2, -2),
+        (-2, -1),
+        (2, -1),
+        (-2, 0),
+        (-1, 0),
+        (1, 0),
+        (2, 0),
+        (-1, 1),
+        (1, 1),
+        (-1, 2),
+        (1, 2),
+        (2, 2),
+    }
 
-    for ox, oy in blocked_offsets:
-        x = cx + ox
-        y = cy + oy
-        if 0 <= x < maze.width and 0 <= y < maze.height:
-            blocked.add((y, x))
+    pattern = patern_7x5
+    blocked = None
 
+    if maze.width <= 8:
+        pattern = patern_5x5
+
+    if maze.width < 7 or maze.height < 7:
+        return blocked
+    else:
+        blocked = set()
+        for ox, oy in pattern:
+            x = cx + ox
+            y = cy + oy
+            if 0 <= x < maze.width and 0 <= y < maze.height:
+                blocked.add((y, x))
     return blocked

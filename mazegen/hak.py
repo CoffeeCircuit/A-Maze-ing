@@ -45,8 +45,12 @@ def hak(maze: MazeGenerator) -> None:
             for i, (dx, dy) in enumerate(DIRS):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < height and 0 <= ny < width:
-                    if (nx, ny) not in visited and (nx, ny) not in blocked:
-                        neighbors.append((nx, ny, i))
+                    if blocked:
+                        if (nx, ny) not in visited and (nx, ny) not in blocked:
+                            neighbors.append((nx, ny, i))
+                    else:
+                        if (nx, ny) not in visited:
+                            neighbors.append((nx, ny, i))
 
             if not neighbors:
                 return x, y
@@ -65,15 +69,23 @@ def hak(maze: MazeGenerator) -> None:
         """
         for x in range(height):
             for y in range(width):
-                if (x, y) in visited or (x, y) in blocked:
-                    continue
+                if blocked:
+                    if (x, y) in visited or (x, y) in blocked:
+                        continue
+                else:
+                    if (x, y) in visited:
+                        continue
 
                 candidates = []
                 for i, (dx, dy) in enumerate(DIRS):
                     nx, ny = x + dx, y + dy
                     if 0 <= nx < height and 0 <= ny < width:
-                        if (nx, ny) in visited and (x, y) not in blocked:
-                            candidates.append((nx, ny, i))
+                        if blocked:
+                            if (nx, ny) in visited and (x, y) not in blocked:
+                                candidates.append((nx, ny, i))
+                        else:
+                            if (nx, ny) in visited:
+                                candidates.append((nx, ny, i))
 
                 if candidates:
                     nx, ny, i = choice(candidates)
