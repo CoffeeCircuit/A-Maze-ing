@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 def make_p42_mask(maze: MazeGenerator) -> set[tuple[int, int]] | None:
     """
-    Function sets a mask of the 42 log in the center of the maze
+    Function sets a mask of the 42 logo in the center of the maze
     This is used in the dfs and hak maze generators
 
     :param maze: MazeGenerator class

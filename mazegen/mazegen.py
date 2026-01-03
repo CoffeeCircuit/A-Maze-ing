@@ -1,8 +1,19 @@
-from typing import Union
+from typing import Union, TypedDict, cast
 from pathlib import Path
 from os import PathLike, access, R_OK
 from .dfs import dfs
 from .hak import hak
+
+
+class Config(TypedDict):
+    width: int
+    height: int
+    entry: tuple[int, int]
+    exit: tuple[int, int]
+    output_file: str
+    perfect: bool
+    seed: int | None
+    algorithm: str | None
 
 
 class MazeGenerator:
@@ -30,7 +41,7 @@ class MazeGenerator:
 
     @output.setter
     def output(self, file: Union[str, PathLike[str]]) -> None:
-        self.output = file
+        self._output = file
 
     @property
     def width(self) -> int | None:
@@ -53,8 +64,8 @@ class MazeGenerator:
         return self._entry
 
     @entry.setter
-    def entry(sefl, entry: tuple[int, int]) -> None:
-        sefl._entry = entry
+    def entry(self, entry: tuple[int, int]) -> None:
+        self._entry = entry
 
     @property
     def exit(self) -> tuple[int, int] | None:
@@ -77,15 +88,6 @@ class MazeGenerator:
         self._algorithm = algorithm
 
     def read(self, file: Union[str, PathLike[str]] = "config.txt") -> None:
-        """
-        Reads the configuration file. By default the file is config.txt.
-        The file must contain WIDTH, HEIGHT, ENTRY, EXIT, OUTPUT_FILE, PERFECT
-        The file can also contain optional SEED and ALGORITHM = [dfs | hak]
-
-        :param self: Reference to class instance
-        :param file: The target configuration file (config.txt by default)
-        :type file: Union[str, PathLike[str]]
-        """
         path = Path(file)
 
         if not path.exists():
@@ -103,7 +105,7 @@ class MazeGenerator:
             "perfect",
         }
 
-        data = {}
+        raw: dict[str, object] = {}
 
         with open(path, "r") as fp:
             for raw_line in fp:
@@ -116,15 +118,21 @@ class MazeGenerator:
                 key = key.lower()
 
                 if val.strip("-").isdigit():
-                    if int(val) < 0:
-                        msg = f"{key} must contain only non-negative integers"
-                        raise ValueError(msg)
-                    data[key] = int(val)
-                elif val.lower() in ("true", "1", "on", "yes"):
-                    data[key] = True
-                elif val.lower() in ("false", "0", "off", "no"):
-                    data[key] = False
-                elif "," in val:
+                    iv = int(val)
+                    if iv < 0:
+                        raise ValueError(f"{key} must be non‑negative")
+                    raw[key] = iv
+                    continue
+
+                lowered = val.lower()
+                if lowered in ("true", "1", "on", "yes"):
+                    raw[key] = True
+                    continue
+                if lowered in ("false", "0", "off", "no"):
+                    raw[key] = False
+                    continue
+
+                if "," in val:
                     parts = [p.strip() for p in val.split(",")]
                     if len(parts) != 2:
                         msg = f"{key} must contain exactly two integers"
@@ -133,77 +141,69 @@ class MazeGenerator:
                         raise ValueError(f"{key} must contain only integers")
                     ints = tuple(map(int, parts))
                     if any(x < 0 for x in ints):
-                        msg = f"{key} must contain only non-negative integers"
+                        msg = f"{key} must contain non‑negative integers"
                         raise ValueError(msg)
-                    data[key] = ints
-                else:
-                    data[key] = val
+                    raw[key] = ints
+                    continue
 
-        missing = mandatory_keys - data.keys()
+                raw[key] = val
+
+        missing = mandatory_keys - raw.keys()
         if missing:
             msg = ", ".join(m.upper() for m in missing)
             raise KeyError(f"Missing keys: {msg}")
 
-        if data.get("width") == 0 or data.get("height") == 0:
-            raise ValueError("width and/or height must be greater than zero")
+        try:
+            config: Config = {
+                "width": cast(int, raw["width"]),
+                "height": cast(int, raw["height"]),
+                "entry": cast(tuple[int, int], raw["entry"]),
+                "exit": cast(tuple[int, int], raw["exit"]),
+                "output_file": cast(str, raw["output_file"]),
+                "perfect": cast(bool, raw["perfect"]),
+                "seed": cast(int | None, raw.get("seed")),
+                "algorithm": cast(str | None, raw.get("algorithm")),
+            }
+        except Exception as e:
+            raise ValueError(f"Invalid configuration: {e}")
 
-        if data.get("entry") == data.get("exit"):
-            raise ValueError("Entry and and exit must be different")
+        ex, ey = config["entry"]
+        if not (0 <= ex < config["width"] and 0 <= ey < config["height"]):
+            raise ValueError("entry coordinates out of bounds")
 
-        entry = data.get("entry")
-        exit_ = data.get("exit")
-        width = data.get("width")
-        height = data.get("height")
+        ex, ey = config["exit"]
+        if not (0 <= ex < config["width"] and 0 <= ey < config["height"]):
+            raise ValueError("exit coordinates out of bounds")
 
-        if entry and width and height:
-            ex, ey = entry
-            if not (0 <= ex < width and 0 <= ey < height):
-                raise ValueError("entry coordinates are out of bounds")
+        if config["entry"] == config["exit"]:
+            raise ValueError("entry and exit must be different")
 
-        if exit_ and width and height:
-            ex, ey = exit_
-            if not (0 <= ex < width and 0 <= ey < height):
-                raise ValueError("exit coordinates are out of bounds")
-
-        if not isinstance(data.get("perfect"), bool):
-            raise ValueError("perfect must be true/false")
-
-        if "algorithm" in data:
-            if data.get("algorithm") not in {"dfs", "hak"}:
-                raise ValueError("algorithm must be one of: dfs, hak")
-
-        for k in ("entry", "exit"):
-            value = data.get(k)
-            if not isinstance(value, tuple):
-                msg = f"{k} must be a tuple, got {type(value).__name__}"
-                raise ValueError(msg)
-
-        # initialize the grid with all the cell having closed walls
-        if width and height:
-            self._grid = [[15 for _ in range(width)] for _ in range(height)]
-
-        self._width = data.get("width")
-        self._height = data.get("height")
-        self._entry = data.get("entry")
-        self._exit = data.get("exit")
-        self._output = data.get("output_file")
-        self._seed = data.get("seed")
-        self._algorithm = data.get("algorithm")
+        i_width = range(config["width"])
+        i_height = range(config["height"])
+        self._grid = [[15 for _ in i_width] for _ in i_height]
+        self._width = config["width"]
+        self._height = config["height"]
+        self._entry = config["entry"]
+        self._exit = config["exit"]
+        self._output = config["output_file"]
+        self._seed = config["seed"]
+        self._algorithm = config["algorithm"]
 
     def write(self) -> None:
-        """
-        Write the maze configuration to the output_file from config.txt
-        """
-        if self._grid and self._output:
-            with open(self._output, "w") as fp:
-                for row in self._grid:
-                    fp.write("".join([hex(v)[2:].upper() for v in row]))
-                    fp.write("\n")
+        if self._grid is None or self._output is None:
+            return
+
+        with open(self._output, "w") as fp:
+            for row in self._grid:
+                fp.write("".join(hex(v)[2:].upper() for v in row))
                 fp.write("\n")
-                if self._entry:
-                    fp.write(f"{self._entry[0]}, {self._entry[1]}\n")
-                if self._exit:
-                    fp.write(f"{self._exit[0]}, {self._exit[1]}\n")
+
+            fp.write("\n")
+
+            if self._entry:
+                fp.write(f"{self._entry[0]}, {self._entry[1]}\n")
+            if self._exit:
+                fp.write(f"{self._exit[0]}, {self._exit[1]}\n")
 
     def generate(self) -> None:
         match self._algorithm:
@@ -215,8 +215,8 @@ class MazeGenerator:
                 dfs(self)
 
     def reset(self) -> None:
-        assert self._width is not None
-        assert self._height is not None
-        width = self._width
-        height = self._height
-        self._grid = [[15 for _ in range(width)] for _ in range(height)]
+        if self._width is None or self._height is None:
+            raise ValueError("Width/height not set")
+        i_width = range(self._width)
+        i_height = range(self._height)
+        self._grid = [[15 for _ in i_width] for _ in i_height]

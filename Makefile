@@ -117,7 +117,7 @@ clean:
 
 lint:
 	@if [ ! -d .venv ]; then \
-		echo "Run make install first..."; \
+		echo "Run 'make build install' first..."; \
 		exit 1; \
 	fi
 	uv run flake8 *.py
@@ -131,7 +131,7 @@ lint:
 
 lint-strict:
 	@if [ ! -d .venv ]; then \
-		echo "Run make install first..."; \
+		echo "Run 'make build install' first..."; \
 		exit 1; \
 	fi
 	uv run flake8 *.py
