@@ -24,6 +24,7 @@ class MazeGenerator:
         self._height: int | None = None
         self._entry: tuple[int, int] | None = None
         self._exit: tuple[int, int] | None = None
+        self._perfect: bool | None = None
         self._seed: int | None = None
         self._algorithm: str | None = None
 
@@ -70,6 +71,18 @@ class MazeGenerator:
     @property
     def exit(self) -> tuple[int, int] | None:
         return self._exit
+
+    @exit.setter
+    def exit(self, exit: tuple[int, int]) -> None:
+        self._exit = exit
+
+    @property
+    def perfect(self) -> bool | None:
+        return self._perfect
+
+    @perfect.setter
+    def perfect(self, perfect: bool) -> None:
+        self._perfect = perfect
 
     @property
     def seed(self) -> int | None:
@@ -120,7 +133,7 @@ class MazeGenerator:
                 if val.strip("-").isdigit():
                     iv = int(val)
                     if iv < 0:
-                        raise ValueError(f"{key} must be non‑negative")
+                        raise ValueError(f"{key} must be non-negative")
                     raw[key] = iv
                     continue
 
@@ -141,7 +154,7 @@ class MazeGenerator:
                         raise ValueError(f"{key} must contain only integers")
                     ints = tuple(map(int, parts))
                     if any(x < 0 for x in ints):
-                        msg = f"{key} must contain non‑negative integers"
+                        msg = f"{key} must contain non-negative integers"
                         raise ValueError(msg)
                     raw[key] = ints
                     continue
@@ -186,6 +199,7 @@ class MazeGenerator:
         self._entry = config["entry"]
         self._exit = config["exit"]
         self._output = config["output_file"]
+        self._perfect = config["perfect"]
         self._seed = config["seed"]
         self._algorithm = config["algorithm"]
 

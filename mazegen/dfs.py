@@ -7,6 +7,7 @@ Generates perfect mazes (no loops).
 from __future__ import annotations
 from random import shuffle, seed
 from .mask_42 import make_p42_mask
+from .imperfect import make_imperfect
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -49,3 +50,6 @@ def dfs(maze: MazeGenerator) -> None:
                     break
         if not moved:
             stack.pop()
+
+    if not maze.perfect:
+        make_imperfect(maze, blocked)

@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from random import seed, choice
 from .mask_42 import make_p42_mask
+from .imperfect import make_imperfect
 
 if TYPE_CHECKING:
     from .mazegen import MazeGenerator
@@ -105,3 +106,6 @@ def hak(maze: MazeGenerator) -> None:
         if not found:
             break
         x, y = found
+
+    if not maze.perfect:
+        make_imperfect(maze, blocked)
