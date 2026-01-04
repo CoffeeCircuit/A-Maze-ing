@@ -165,7 +165,7 @@ The maze is encoded using hexadecimal digits where each digit represents a cell'
 ```
      N (bit 0)
         |
-W ─────█───── E (bit 1)
+ W ─────█───── E (bit 1)
 (bit 3) |
         S (bit 2)
 ```
