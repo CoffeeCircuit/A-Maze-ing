@@ -33,7 +33,7 @@ def a_maze_ing(argv: list[str]) -> None:
             regenerate, maze.seed = vis.render()
             maze.reset()
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"{type(e).__name__}: {e}")
         exit(1)
 
 

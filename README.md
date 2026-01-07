@@ -13,7 +13,7 @@ A-Maze-ing is a command-line maze generation tool that:
 - 🖥️ Provides an interactive terminal-based visualization with color customization
 - 🔍 Includes BFS-based pathfinding for shortest path calculation
 - 🎨 Embeds a visible "42" pattern using fully closed cells (when maze size permits)
-- 📦 Packages maze generation logic as a reusable Python library
+- 📦 Packages maze generation logic as a reusable Python library (via wheel file)
 
 The project emphasizes clean code architecture, type safety with mypy, and modern Python development practices.
 
@@ -126,6 +126,7 @@ make config        # Edit configuration file
 make lint          # Run flake8 and mypy
 make lint-strict   # Run strict mypy checks
 make clean         # Remove cache and generated files
+make fclean        # Removes the wheel file (used in development)
 make uninstall     # Remove all dependencies
 make help          # Show all available targets
 ```
@@ -723,7 +724,7 @@ make debug config.txt
 
 ```bash
 # Test different configurations
-make run config.txt
+make run ARG=config.txt
 
 # Test with different seeds
 echo "SEED=42" >> config.txt
@@ -779,7 +780,7 @@ A-Maze-ing/
 ## 🚧 Future Improvements
 
 - [ ] Add more algorithms (Prim's, Kruskal's, Eller's, Wilson's)
-- [ ] Implement maze solving animation
+- [ ] Improve maze solving animation (show alternative paths when available)
 - [ ] Support hexagonal and circular maze topologies
 - [ ] MLX-based graphical visualization
 - [ ] Web interface using Flask

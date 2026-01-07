@@ -1,11 +1,11 @@
 # This file is read by a_maze_ing.py
-WIDTH=5
-HEIGHT=5
+WIDTH=25
+HEIGHT=25
 ENTRY=0,0
-EXIT=3,3
+EXIT=19,14
 OUTPUT_FILE=out.txt
 PERFECT=False
 
 # The flags below are optional
 # SEED=42
-ALGORITHM=hak
+# ALGORITHM=hak

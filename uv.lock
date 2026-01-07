@@ -4,5 +4,5 @@ requires-python = ">=3.11"
 
 [[package]]
 name = "mazegen"
-version = "0.7.0"
+version = "1.0.0"
 source = { virtual = "." }

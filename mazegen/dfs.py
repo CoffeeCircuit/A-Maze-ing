@@ -21,11 +21,19 @@ def dfs(maze: MazeGenerator) -> None:
     :param maze: MazeGenerator class
     """
     assert maze.entry is not None
+    assert maze.exit is not None
     assert maze.height is not None
     assert maze.width is not None
     assert maze.grid is not None
 
     blocked = make_p42_mask(maze)
+    if blocked:
+        if maze.entry in blocked:
+            msg = f"Entry point {maze.entry} is inside the 42 (blocked) mask."
+            raise ValueError(msg)
+        if maze.exit in blocked:
+            msg = f"Exit point {maze.exit} is inside the 42 (blocked) mask."
+            raise ValueError(msg)
     seed(maze.seed)
     stack: list[tuple[int, int]] = [maze.entry]
     visited: set[tuple[int, int]] = {maze.entry}

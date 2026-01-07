@@ -13,6 +13,7 @@ from sys import stdout, stdin
 from select import select
 from termios import tcgetattr, tcsetattr, TCSADRAIN
 from tty import setcbreak
+from time import sleep
 
 
 class Point:
@@ -270,6 +271,7 @@ class Visualizer:
         self.path_color: Graphics.Color = Graphics.Color.Green
         self.logo_color: Graphics.Color = Graphics.Color.Yellow
         self.path_symbol: str = "░"
+        self.path_drawn = False
 
     def read(self, file: Union[str, PathLike[str]]) -> None:
         """Load maze from output file.
@@ -387,7 +389,7 @@ class Visualizer:
                         stdout.write("█")
             Graphics.reset()
 
-        def _path() -> None:
+        def _path(animate: bool = False) -> None:
             """Render solution path through maze."""
             Graphics.set(self.path_color)
             for c in self.path:
@@ -415,6 +417,9 @@ class Visualizer:
                     cursor.left()
                     cursor.left()
                     stdout.write(self.path_symbol)
+                stdout.flush()
+                if animate:
+                    sleep(0.02)
             Graphics.reset()
 
         kbd = Visualizer.Keyboard()
@@ -432,11 +437,6 @@ class Visualizer:
                     cursor.home()
                     _walls()
                     _logo()
-                    cursor.move_to(self.start.x * 2 + 1, self.start.y * 2 + 1)
-                    stdout.write("S")
-                    _path()
-                    cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
-                    stdout.write("E")
                     if self.width <= 18 or self.height <= 18:
                         cursor.move_to(0, term.height - 3)
                         stdout.write("Info: Maze too small for the 42 pattern")
@@ -445,6 +445,17 @@ class Visualizer:
                     for item in menu[menu_type]:
                         Graphics.menu(item)
                         stdout.write("    ")
+                    cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
+                    stdout.write("E")
+                    cursor.move_to(self.start.x * 2 + 1, self.start.y * 2 + 1)
+                    stdout.write("S")
+                    if not self.path_drawn:
+                        _path(animate=True)
+                        self.path_drawn = True
+                    else:
+                        _path()
+                    cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
+                    stdout.write("E")
                     stdout.flush()
                     refresh = False
 
@@ -454,6 +465,7 @@ class Visualizer:
                         case "q":
                             return False, None
                         case "n" if menu_type == "Main":
+                            cursor.move_to(0, term.height - 1)
                             cursor.clear_line()
                             cursor.show()
                             Visualizer.Keyboard.disable_raw_mode(mode)

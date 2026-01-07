@@ -23,6 +23,13 @@ def hak(maze: MazeGenerator) -> None:
 
     seed(maze.seed)
     blocked = make_p42_mask(maze)
+    if blocked:
+        if maze.entry in blocked:
+            msg = f"Entry point {maze.entry} is inside the 42 (blocked) mask."
+            raise ValueError(msg)
+        if maze.exit in blocked:
+            msg = f"Exit point {maze.exit} is inside the 42 (blocked) mask."
+            raise ValueError(msg)
     width = maze.width
     height = maze.height
     grid = maze.grid

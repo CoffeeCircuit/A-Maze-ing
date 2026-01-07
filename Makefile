@@ -109,11 +109,13 @@ clean:
 	find . -name "*.pyo" -delete
 	rm -rf .venv
 	rm -rf dist
-	rm -f mazegen*.whl
 	@if [ -f config.txt ]; then \
 		echo rm -f "$(OUTPUT_FILE)"; \
 		rm -f "$(OUTPUT_FILE)"; \
 	fi
+
+fclean: clean
+	rm -f mazegen*.whl
 
 lint:
 	@if [ ! -d .venv ]; then \
@@ -151,4 +153,5 @@ help:
 	@echo "  lint           Run flake8 and mypy"
 	@echo "  lint-strict    Run strict mypy checks"
 	@echo "  clean          Remove caches and temporary files"
+	@echo "  fclean         Removes wheel file"
 	@echo "  debug          Run the debugger"
