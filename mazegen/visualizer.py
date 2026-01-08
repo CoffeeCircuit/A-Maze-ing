@@ -131,8 +131,8 @@ class Visualizer:
             """Get a single keypress without blocking.
 
             Returns:
-                Key character or special key name ('up'), or None if no key
-                pressed.
+                Key character or special key name ('up', 'down', 'left', 'right'),
+                or None if no key pressed.
             """
             dr, _, _ = select([stdin], [], [], 0)
             if not dr:
@@ -141,8 +141,16 @@ class Visualizer:
             if ch == "\x1b":
                 ch1 = stdin.read(1)
                 ch2 = stdin.read(1)
-                if ch1 == "[" and ch2 == "A":
-                    return "up"
+                if ch1 == "[":
+                    if ch2 == "A":
+                        return "up"
+                    if ch2 == "B":
+                        return "down"
+                    if ch2 == "C":
+                        return "right"
+                    if ch2 == "D":
+                        return "left"
+                return ch
             return ch
 
     class Cursor:
@@ -284,16 +292,8 @@ class Visualizer:
             for y, line in enumerate(fp):
                 if line == "\n":
                     break
-                maze.append(
-                    [
-                        Cell(
-                            x,
-                            y,
-                            int(c, 16),
-                        )
-                        for x, c in enumerate(line.strip())
-                    ]
-                )
+                maze.append([Cell(x, y, int(c, 16))
+                            for x, c in enumerate(line.strip())])
             start = Point(*(int(x) for x in fp.readline().strip().split(",")))
             end = Point(*(int(x) for x in fp.readline().strip().split(",")))
             path = [c.upper() for c in fp.readline().strip()]
@@ -321,8 +321,37 @@ class Visualizer:
         m_w = len(self.maze[0])
         out = [[" " for _ in range(m_w * 2 + 1)] for _ in range(m_h * 2 + 1)]
 
+        # Viewport offsets (top-left corner in `out`)
+        off_x = 0
+        off_y = 0
+
+        # Viewport size (computed on refresh)
+        view_w = term.width
+        view_h = max(1, term.height - 3)
+
+        def clamp_offsets() -> None:
+            nonlocal off_x, off_y, view_w, view_h
+            out_h = len(out)
+            out_w = len(out[0]) if out else 0
+            max_off_x = max(0, out_w - view_w)
+            max_off_y = max(0, out_h - view_h)
+            if off_x < 0:
+                off_x = 0
+            elif off_x > max_off_x:
+                off_x = max_off_x
+            if off_y < 0:
+                off_y = 0
+            elif off_y > max_off_y:
+                off_y = max_off_y
+
+        def to_screen(x: int, y: int) -> tuple[int, int]:
+            return x - off_x, y - off_y
+
+        def in_view(sx: int, sy: int) -> bool:
+            return 0 <= sx < view_w and 0 <= sy < view_h
+
         def _walls() -> None:
-            """Render maze walls and junctions."""
+            """Render maze walls and junctions into `out` then print viewport."""
             checks = [
                 (-1, 0, "│"),
                 (0, 1, "─"),
@@ -346,6 +375,11 @@ class Visualizer:
                 14: "┬",
                 15: "┼",
             }
+
+            # reset out
+            for i in range(len(out)):
+                for j in range(len(out[i])):
+                    out[i][j] = " "
 
             for mi in range(m_h):
                 for mj in range(m_w):
@@ -371,52 +405,56 @@ class Visualizer:
                                 mask |= 1 << bit
                     out[i][j] = junction_map.get(mask, " ")
             Graphics.set(self.wall_color)
-            for line in out:
-                stdout.write("".join(line) + "\n")
+            for row_i in range(off_y, min(off_y + view_h, len(out))):
+                stdout.write("".join(out[row_i][off_x:off_x + view_w]) + "\n")
             Graphics.reset()
 
         def _logo() -> None:
-            """Render logo (filled cells with all walls)."""
-            m_h = len(self.maze)
-            m_w = len(self.maze[0])
+            """Render logo (filled cells with all walls) inside viewport."""
             Graphics.set(self.logo_color)
             for mi in range(m_h):
                 for mj in range(m_w):
                     i = mi * 2 + 1
                     j = mj * 2 + 1
                     if self.maze[mi][mj].walls == 15:
-                        cursor.move_to(j, i)
-                        stdout.write("█")
+                        sx, sy = to_screen(j, i)
+                        if in_view(sx, sy):
+                            cursor.move_to(sx, sy)
+                            stdout.write("█")
             Graphics.reset()
 
         def _path(animate: bool = False) -> None:
-            """Render solution path through maze."""
+            """Render solution path through maze (viewport-aware, continuous)."""
+            x = self.start.x * 2 + 1
+            y = self.start.y * 2 + 1
+
+            def draw(px: int, py: int) -> None:
+                sx = px - off_x
+                sy = py - off_y
+                if 0 <= sx < view_w and 0 <= sy < view_h:
+                    cursor.move_to(sx, sy)
+                    stdout.write(self.path_symbol)
+
             Graphics.set(self.path_color)
+
             for c in self.path:
                 if c == "N":
-                    cursor.left()
-                    cursor.up()
-                    stdout.write(self.path_symbol)
-                    cursor.left()
-                    cursor.up()
-                    stdout.write(self.path_symbol)
+                    draw(x, y - 1)
+                    draw(x, y - 2)
+                    y -= 2
                 elif c == "S":
-                    cursor.left()
-                    cursor.down()
-                    stdout.write(self.path_symbol)
-                    cursor.left()
-                    cursor.down()
-                    stdout.write(self.path_symbol)
+                    draw(x, y + 1)
+                    draw(x, y + 2)
+                    y += 2
                 elif c == "E":
-                    stdout.write(self.path_symbol)
-                    stdout.write(self.path_symbol)
+                    draw(x + 1, y)
+                    draw(x + 2, y)
+                    x += 2
                 elif c == "W":
-                    cursor.left()
-                    cursor.left()
-                    stdout.write(self.path_symbol)
-                    cursor.left()
-                    cursor.left()
-                    stdout.write(self.path_symbol)
+                    draw(x - 1, y)
+                    draw(x - 2, y)
+                    x -= 2
+
                 stdout.flush()
                 if animate:
                     sleep(0.02)
@@ -432,6 +470,12 @@ class Visualizer:
         try:
             while True:
                 if refresh:
+                    term.update()
+                    view_w = max(1, term.width)
+                    menu_lines = 3
+                    view_h = max(1, term.height - menu_lines)
+                    clamp_offsets()
+
                     term.clear()
                     cursor.hide()
                     cursor.home()
@@ -447,17 +491,30 @@ class Visualizer:
                     for item in menu[menu_type]:
                         Graphics.menu(item)
                         stdout.write("    ")
-                    cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
-                    stdout.write("E")
-                    cursor.move_to(self.start.x * 2 + 1, self.start.y * 2 + 1)
-                    stdout.write("S")
+
+                    # Draw E/S if visible
+                    ex = self.end.x * 2 + 1
+                    ey = self.end.y * 2 + 1
+                    sx0 = self.start.x * 2 + 1
+                    sy0 = self.start.y * 2 + 1
+
+                    e_scr_x, e_scr_y = to_screen(ex, ey)
+                    s_scr_x, s_scr_y = to_screen(sx0, sy0)
+
+                    if in_view(s_scr_x, s_scr_y):
+                        cursor.move_to(s_scr_x, s_scr_y)
+                        stdout.write("S")
+
                     if not self.path_drawn:
                         _path(animate=True)
                         self.path_drawn = True
                     else:
                         _path()
-                    cursor.move_to(self.end.x * 2 + 1, self.end.y * 2 + 1)
-                    stdout.write("E")
+
+                    if in_view(e_scr_x, e_scr_y):
+                        cursor.move_to(e_scr_x, e_scr_y)
+                        stdout.write("E")
+
                     stdout.flush()
                     refresh = False
 
@@ -466,6 +523,25 @@ class Visualizer:
                     match key.lower():
                         case "q":
                             return False, None
+
+                        # Viewport panning with arrow keys
+                        case "up":
+                            off_y = max(0, off_y - 1)
+                            refresh = True
+                        case "down":
+                            out_h = len(out)
+                            max_off_y = max(0, out_h - view_h)
+                            off_y = min(max_off_y, off_y + 1)
+                            refresh = True
+                        case "left":
+                            off_x = max(0, off_x - 2)
+                            refresh = True
+                        case "right":
+                            out_w = len(out[0]) if out else 0
+                            max_off_x = max(0, out_w - view_w)
+                            off_x = min(max_off_x, off_x + 2)
+                            refresh = True
+
                         case "n" if menu_type == "Main":
                             cursor.move_to(0, term.height - 1)
                             cursor.clear_line()
