@@ -107,7 +107,6 @@ clean:
 	find . -name .pytest_cache -exec rm -rf {} +
 	find . -name "*.pyc" -delete
 	find . -name "*.pyo" -delete
-	rm -rf .venv
 	rm -rf dist
 	@if [ -f config.txt ]; then \
 		echo rm -f "$(OUTPUT_FILE)"; \
@@ -115,6 +114,7 @@ clean:
 	fi
 
 fclean: clean
+	rm -rf .venv
 	rm -f mazegen*.whl
 
 lint:
