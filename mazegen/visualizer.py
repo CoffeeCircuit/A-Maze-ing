@@ -131,7 +131,8 @@ class Visualizer:
             """Get a single keypress without blocking.
 
             Returns:
-                Key character or special key name ('up', 'down', 'left', 'right'),
+                Key character or special key name
+                ('up', 'down', 'left', 'right'),
                 or None if no key pressed.
             """
             dr, _, _ = select([stdin], [], [], 0)
@@ -289,11 +290,12 @@ class Visualizer:
         """
         maze: list[list[Cell]] = []
         with open(file, "r") as fp:
-            for y, line in enumerate(fp):
-                if line == "\n":
+            for y, ln in enumerate(fp):
+                if ln == "\n":
                     break
-                maze.append([Cell(x, y, int(c, 16))
-                            for x, c in enumerate(line.strip())])
+                maze.append(
+                    [Cell(x, y, int(c, 16)) for x, c in enumerate(ln.strip())]
+                )
             start = Point(*(int(x) for x in fp.readline().strip().split(",")))
             end = Point(*(int(x) for x in fp.readline().strip().split(",")))
             path = [c.upper() for c in fp.readline().strip()]
@@ -351,7 +353,9 @@ class Visualizer:
             return 0 <= sx < view_w and 0 <= sy < view_h
 
         def _walls() -> None:
-            """Render maze walls and junctions into `out` then print viewport."""
+            """
+            Render maze walls and junctions into `out` then print viewport.
+            """
             checks = [
                 (-1, 0, "│"),
                 (0, 1, "─"),
@@ -410,7 +414,9 @@ class Visualizer:
             Graphics.reset()
 
         def _logo() -> None:
-            """Render logo (filled cells with all walls) inside viewport."""
+            """
+            Render logo (filled cells with all walls) inside viewport.
+            """
             Graphics.set(self.logo_color)
             for mi in range(m_h):
                 for mj in range(m_w):
@@ -424,7 +430,9 @@ class Visualizer:
             Graphics.reset()
 
         def _path(animate: bool = False) -> None:
-            """Render solution path through maze (viewport-aware, continuous)."""
+            """
+            Render solution path through maze (viewport-aware, continuous).
+            """
             x = self.start.x * 2 + 1
             y = self.start.y * 2 + 1
 
@@ -484,7 +492,8 @@ class Visualizer:
                     if self.width <= 18 or self.height <= 18:
                         cursor.move_to(0, term.height - 3)
                         Graphics.set(Graphics.Color.Yellow)
-                        stdout.write("⚠️ Info: Maze too small for the 42 pattern")
+                        msg = "⚠️ Info: Maze too small for the 42 pattern"
+                        stdout.write(msg)
                         Graphics.reset()
                     cursor.move_to(0, term.height - 2)
                     stdout.write("─" * term.width)

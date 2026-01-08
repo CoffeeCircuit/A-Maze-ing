@@ -138,7 +138,7 @@ lint:
 		echo "Run 'make build install' first..."; \
 		exit 1; \
 	fi
-	uv run flake8 *.py
+	uv run flake8 **/*.py
 	uv run mypy . \
 		--warn-return-any \
 		--warn-unused-ignores \
@@ -152,7 +152,7 @@ lint-strict:
 		echo "Run 'make build install' first..."; \
 		exit 1; \
 	fi
-	uv run flake8 *.py
+	uv run flake8 **/*.py
 	uv run mypy . \
 		--strict \
 		--exclude '(^\.venv/|^test/|^subject/)'
